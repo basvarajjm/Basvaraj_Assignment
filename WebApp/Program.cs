@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using WebApp.Helpers;
+using WebApp.Interfaces;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp
 {
@@ -28,6 +30,8 @@ namespace WebApp
             builder.Services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(JwtHelper.GetJwtOptionAction(authConfig));
+
+            builder.Services.AddScoped<ICurrenyService, CurrencyService>();
 
             var app = builder.Build();
 
