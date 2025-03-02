@@ -2,6 +2,6 @@
 {
     public interface ICurrenyService
     {
-        long GetDKKEquivalentOf(string currency, long value);
+        double GetDKKEquivalentOf(string currency, long value);
     }
 }

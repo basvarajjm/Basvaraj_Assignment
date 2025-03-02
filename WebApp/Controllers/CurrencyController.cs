@@ -20,7 +20,7 @@ namespace WebApp.Controllers
             {
                 return new BadRequestObjectResult("Currency parameter is required.");
             }
-            long result;
+            double result;
             try
             {
                 // service call

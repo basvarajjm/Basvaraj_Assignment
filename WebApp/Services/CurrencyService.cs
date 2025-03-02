@@ -5,12 +5,12 @@ namespace WebApp.Services
     public class CurrencyService: ICurrenyService
     {
 
-        public long GetDKKEquivalentOf(string currency, long value)
+        public double GetDKKEquivalentOf(string currency, long value)
         {
             // Repository call
-            long rate = 12;
+            double rate = 12;
 
-            long result;
+            double result;
             checked
             {
                 result = value * rate;

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using WebApp.Helpers;
 using WebApp.Interfaces;
 using WebApp.Models;
+using WebApp.Repository;
 using WebApp.Services;
 
 namespace WebApp
@@ -32,6 +33,7 @@ namespace WebApp
                 .AddJwtBearer(JwtHelper.GetJwtOptionAction(authConfig));
 
             builder.Services.AddScoped<ICurrenyService, CurrencyService>();
+            builder.Services.AddScoped<IRepository, FileRepository>();
 
             var app = builder.Build();
 
