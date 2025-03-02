@@ -1,18 +1,33 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using WebApp.Helpers;
 using WebApp.Models;
 
 namespace WebApp
 {
     public class Program
     {
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
+
+            AuthConfig authConfig;
+            if (!ConfigurationHelper.TryToGetAuthConfiguration(builder.Configuration, out authConfig))
+            {
+                Console.WriteLine("Auth configurations are required to start the application.");
+                return;
+            }
+
+            // Add services to the container.
+            builder.Services.AddControllersWithViews();
+
+            builder.Services.AddAuthorization();
+            builder.Services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(JwtHelper.GetJwtOptionAction(authConfig));
 
             var app = builder.Build();
 
