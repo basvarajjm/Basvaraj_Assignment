@@ -64,7 +64,7 @@ namespace WebApp
 
             app.Services.UseScheduler(scheduler =>
             {
-                scheduler.Schedule<UpdateCurrenyJob>().EveryMinute();
+                scheduler.Schedule<UpdateCurrenyJob>().Hourly();
             });
 
             // Configure the HTTP request pipeline.
