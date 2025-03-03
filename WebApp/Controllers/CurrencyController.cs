@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebApp.Exceptions;
 using WebApp.Interfaces;
 
 namespace WebApp.Controllers
@@ -46,7 +47,7 @@ namespace WebApp.Controllers
         {
             return exception switch
             {
-                ArgumentNullException ex => StatusCode(404, "Invalid currency."),
+                ItemNotFoundException ex => StatusCode(404, "Invalid Currency."),
                 OverflowException ex => ReturnInternalError(),
                 Exception ex => ReturnInternalError()
             };

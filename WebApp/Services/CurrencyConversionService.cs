@@ -1,6 +1,8 @@
-﻿using WebApp.Interfaces;
+﻿using WebApp.Exceptions;
+using WebApp.Interfaces;
 using WebApp.Models;
 using WebApp.Repositories;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApp.Services
 {
@@ -21,9 +23,13 @@ namespace WebApp.Services
 
         public async Task<double> GetDKKEquivalentOf(string currency, long value, CancellationToken cancellationToken = default)
         {
-            // Repository call
             var list = await GetCurrenciesAsync(cancellationToken);
-            double rate = list.First(x => x.Code.ToLower() == currency.ToLower()).Rate;
+            var data = list.Find(x => x.Code.ToLower() == currency.ToLower());
+            if (data == null)
+            {
+                throw new ItemNotFoundException();
+            }
+            double rate = data.Rate;
             double result;
             checked
             {
