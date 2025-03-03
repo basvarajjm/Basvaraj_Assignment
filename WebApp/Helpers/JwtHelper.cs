@@ -16,11 +16,12 @@ namespace WebApp.Helpers
                     ValidateIssuer = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
+                    ValidateAudience =  false,
                     ValidIssuer = authConfig.Issuer,
                     // We shouldn't store the KEY in some appsettings files as it contains sensitive data.
                     // Maybe we can use something like Environment variables or Vault in this case.
                     // For this example I have used appsettings file for storing Key (We can assume that this value is being taken from secure storage like Vault).
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authConfig.Key))
+                    IssuerSigningKey = new SymmetricSecurityKey(Convert.FromBase64String(authConfig.Key))
                 };
             };
         }

@@ -4,6 +4,7 @@ namespace WebApp.Interfaces
 {
     public interface IRepository
     {
-        Task<List<CurrencyRate>> GetCurrencyRates();
+        Task<List<Currency>?> GetCurrencyRatesAsync(CancellationToken cancellationToken = default);
+        Task CreateOrUpdateCurrencyAsync(List<Currency> list, CancellationToken cancellationToken = default);
     }
 }

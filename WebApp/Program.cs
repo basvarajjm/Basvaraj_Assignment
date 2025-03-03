@@ -2,13 +2,20 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using WebApp.Helpers;
 using WebApp.Interfaces;
 using WebApp.Models;
-using WebApp.Repository;
+using WebApp.Repositories;
 using WebApp.Services;
+using Coravel;
+using WebApp.BackgroundTasks;
+using Polly.Extensions.Http;
+using Polly;
+using Polly.Retry;
+using NLog.Web;
 
 namespace WebApp
 {
     public class Program
     {
+        private static CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
 
         public static void Main(string[] args)
         {
@@ -17,8 +24,14 @@ namespace WebApp
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            AuthConfig authConfig;
-            if (!ConfigurationHelper.TryToGetAuthConfiguration(builder.Configuration, out authConfig))
+            if (!ConfigurationHelper.IsAllRequiredConfigurationSet(builder.Configuration))
+            {
+                Console.WriteLine("Cannot start the application, some required configurations are missing.");
+                return;
+            }
+
+            AuthConfig? authConfig;
+            if (!ConfigurationHelper.TryToGetAuthConfiguration(builder.Configuration, out authConfig) || authConfig == null)
             {
                 Console.WriteLine("Auth configurations are required to start the application.");
                 return;
@@ -32,12 +45,30 @@ namespace WebApp
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(JwtHelper.GetJwtOptionAction(authConfig));
 
-            builder.Services.AddScoped<ICurrenyService, CurrencyService>();
-            builder.Services.AddScoped<IRepository, FileRepository>();
+            builder.Services.AddScoped<ICurrenyConversionService, CurrencyConversionService>();
+
+            builder.Services.AddMemoryCache();
+            builder.Services.AddSingleton<FileRepository>();
+            builder.Services.AddSingleton<CacheRepository>();
+
+            builder.Services.AddScheduler();
+            builder.Services.AddSingleton<UpdateCurrenyJob>();
+
+            builder.Services.AddSingleton<IDKBankService, DKBankService>();
+            builder.Services.AddHttpClient<IDKBankService, DKBankService>().AddPolicyHandler(HttpRetryPolicy());
+
+            builder.Logging.ClearProviders();
+            builder.Host.UseNLog();
 
             var app = builder.Build();
 
+            app.Services.UseScheduler(scheduler =>
+            {
+                scheduler.Schedule<UpdateCurrenyJob>().EveryMinute();
+            });
+
             // Configure the HTTP request pipeline.
+
             if (!app.Environment.IsDevelopment())
             {
                 app.UseExceptionHandler("/Home/Error");
@@ -47,16 +78,22 @@ namespace WebApp
 
             app.UseHttpsRedirection();
 
+            app.UseRouting();
+
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseRouting();
-
-            app.MapControllerRoute(
-                name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}");
+            app.MapControllerRoute(name: "default", pattern: "{controller=Swagger}/{action=Index}/{id?}");
 
             app.Run();
+        }
+
+        private static AsyncRetryPolicy<HttpResponseMessage> HttpRetryPolicy()
+        {
+            return HttpPolicyExtensions
+               .HandleTransientHttpError()
+               .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+
         }
     }
 }

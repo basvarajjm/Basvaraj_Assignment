@@ -1,20 +1,28 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApp.Interfaces;
 
 namespace WebApp.Controllers
 {
+    /// <summary>
+    /// Currency Conversion
+    /// </summary>
     public class CurrencyController : Controller
     {
         private readonly ILogger<CurrencyController> _logger;
-        private readonly ICurrenyService _currenyService;
-        public CurrencyController(ILogger<CurrencyController> logger, ICurrenyService currenyService)
+        private readonly ICurrenyConversionService _currenyService;
+        /// <summary>
+        /// Currency Conversion
+        /// </summary>
+        public CurrencyController(ILogger<CurrencyController> logger, ICurrenyConversionService currenyService)
         {
             _logger = logger;
             _currenyService = currenyService;
         }
-        // GET: CurrencyController/Get/USD
-        public ActionResult GetDKKEquivalent([FromRoute]string currency, [FromQuery]long value)
+
+        [Authorize]
+        [HttpGet("/Currency/GetDKKEquivalent/{currency}")]
+        public async Task<ActionResult> GetDKKEquivalent([FromRoute]string currency, [FromQuery]long value)
         {
             if (string.IsNullOrEmpty(currency))
             {
@@ -24,11 +32,11 @@ namespace WebApp.Controllers
             try
             {
                 // service call
-                result = _currenyService.GetDKKEquivalentOf(currency, value);
+                result = await _currenyService.GetDKKEquivalentOf(currency, value);
             }
             catch (Exception e)
             {
-                _logger.LogError(e);
+                _logger.LogError(e, "Error while fetching DKK equivalent data");
                 return HandleException(e);
             }
             return Ok(result);
@@ -38,6 +46,7 @@ namespace WebApp.Controllers
         {
             return exception switch
             {
+                ArgumentNullException ex => StatusCode(404, "Invalid currency."),
                 OverflowException ex => ReturnInternalError(),
                 Exception ex => ReturnInternalError()
             };
