@@ -2,7 +2,6 @@
 using WebApp.Interfaces;
 using WebApp.Models;
 using WebApp.Repositories;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace WebApp.Services
 {
@@ -36,6 +35,11 @@ namespace WebApp.Services
                 result = value * rate;
             }
             return result;
+        }
+
+        public async Task<List<Currency>> GetAllCurrenciesAsync(CancellationToken cancellationToken = default)
+        {
+            return await GetCurrenciesAsync(cancellationToken);
         }
 
         private async Task<List<Currency>> GetCurrenciesAsync(CancellationToken cancellationToken = default)

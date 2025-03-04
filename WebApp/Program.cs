@@ -10,6 +10,7 @@ using Polly.Extensions.Http;
 using Polly;
 using Polly.Retry;
 using NLog.Web;
+using WebApp.Constants;
 
 namespace WebApp
 {
@@ -40,7 +41,13 @@ namespace WebApp
             // Add services to the container.
             builder.Services.AddControllersWithViews();
 
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy(
+                    AuthorizationPolicyConstants.AdminPolicyName, 
+                    policy => policy.RequireClaim(AuthorizationPolicyConstants.AdminClaimName, "true")
+                );
+            });
             builder.Services
                 .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(JwtHelper.GetJwtOptionAction(authConfig));
