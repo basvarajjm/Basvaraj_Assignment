@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 WebApp/Currency.json
+/WebApp/Curreny_Conversion*.json

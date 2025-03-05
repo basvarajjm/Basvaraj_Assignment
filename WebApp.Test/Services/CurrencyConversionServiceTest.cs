@@ -66,7 +66,7 @@ namespace WebApp.Test.Services
             {
                 result = await _currencyConversionService.GetDKKEquivalentOf(currency, value, cancellationToken);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Assert
                 Assert.Fail("Should not throw any exception.");

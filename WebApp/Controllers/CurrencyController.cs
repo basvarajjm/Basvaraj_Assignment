@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebApp.Constants;
 using WebApp.Exceptions;
 using WebApp.Interfaces;
+using WebApp.Models;
 
 namespace WebApp.Controllers
 {
@@ -10,10 +11,12 @@ namespace WebApp.Controllers
     {
         private readonly ILogger<CurrencyController> _logger;
         private readonly ICurrenyConversionService _currenyService;
-        public CurrencyController(ILogger<CurrencyController> logger, ICurrenyConversionService currenyService)
+        private readonly IFetchRecordRepository _fetchRecordRepository;
+        public CurrencyController(ILogger<CurrencyController> logger, ICurrenyConversionService currenyService, IFetchRecordRepository fetchRecordRepository)
         {
             _logger = logger;
             _currenyService = currenyService;
+            _fetchRecordRepository = fetchRecordRepository;
         }
 
         [Authorize]
@@ -29,6 +32,10 @@ namespace WebApp.Controllers
             {
                 // service call
                 result = await _currenyService.GetDKKEquivalentOf(currency, value, cancellationToken);
+                await _fetchRecordRepository.StoreCurrencyRecordData(
+                    new ConvertedRecord { Currency = currency, DateTime = DateTime.Now, Rate = result }, 
+                    cancellationToken
+                );
             }
             catch (Exception e)
             {
@@ -60,11 +67,51 @@ namespace WebApp.Controllers
             }
         }
 
+
+        [Authorize]
+        [HttpGet("/Currency/GetCurrencyFetchHistory")]
+        public async Task<ActionResult> GetCurrencyFetchHistory(
+            DateTime from, 
+            DateTime to,
+            string currency,
+            int offset = 0,
+            int limit = 0,
+            CancellationToken cancellationToken = default
+        ) {
+            try
+            {
+                if (from > to)
+                {
+                    return new BadRequestObjectResult("From date should not be greater than to date.");
+                }
+                if (offset < 0)
+                {
+                    return new BadRequestObjectResult("Invalid Offset, should be atleast 0 or greater than 0.");
+                }
+                if (limit < 1)
+                {
+                    return new BadRequestObjectResult("Invalid limit. should be atleast 1 or greater than 1");
+                }
+                var list = await _fetchRecordRepository.GetCurrencyRecordData(from, to, currency, offset, limit, cancellationToken);
+                if (list != null && list.Count > 0)
+                {
+                    return Ok(list);
+                }
+                return new NotFoundObjectResult("Couldn't find any data for the input filter, please try again with different input combinations.");
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Error while fetching Currency Rates history data");
+                return HandleException(e);
+            }
+        }
+
         private ActionResult HandleException(Exception exception)
         {
             return exception switch
             {
                 ItemNotFoundException ex => StatusCode(400, "Currency conversion not supported."),
+                IOException ex => ReturnInternalError(),
                 OverflowException ex => ReturnInternalError(),
                 Exception ex => ReturnInternalError()
             };

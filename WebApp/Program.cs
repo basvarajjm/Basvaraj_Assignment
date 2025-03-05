@@ -57,6 +57,7 @@ namespace WebApp
             builder.Services.AddMemoryCache();
             builder.Services.AddSingleton<FileRepository>();
             builder.Services.AddSingleton<CacheRepository>();
+            builder.Services.AddSingleton<IFetchRecordRepository, FetchRecordRepository>();
 
             builder.Services.AddScheduler();
             builder.Services.AddSingleton<UpdateCurrenyJob>();
